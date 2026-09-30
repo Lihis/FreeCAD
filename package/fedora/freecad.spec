@@ -15,8 +15,7 @@
 
 
 Name:           freecad
-Epoch:          1
-Version:        26.3.0~dev
+Version:        1.1.4
 Release:        1%{?dist}
 
 Summary:        A general purpose 3D CAD modeler
@@ -24,7 +23,7 @@ Group:          Applications/Engineering
 License:        LGPL-2.0-or-later
 URL:            https://www.freecad.org/
 
-Source0:        freecad-sources.tar.gz
+Source0:        https://github.com/FreeCAD/FreeCAD/releases/download/%{version}/freecad_source_%{version}.tar.gz#/%{name}-%{version}.tar.gz
 
 
 # Maintainers:  keep this list of plugins up to date
@@ -57,7 +56,7 @@ BuildRequires:boost-devel Coin4-devel eigen3-devel freeimage-devel libglvnd-deve
 BuildRequires:  smesh-devel
 %endif
 %if %{without bundled_zipios}
-BuildRequires:  zipios++-devel
+BuildRequires:  zipios++-devel >= 2.0
 %endif
 %if %{without bundled_pycxx}
 BuildRequires:  python3-pycxx-devel
@@ -69,7 +68,7 @@ BuildRequires:  libappstream-glib
 
 # Packages separated because they are noarch, but not optional so require them
 # here.
-Requires:       %{name}-data = %{epoch}:%{version}-%{release}
+Requires:       %{name}-data = %{?epoch:%{epoch}:}%{version}-%{release}
 # Obsolete old doc package since it's required for functionality.
 Obsoletes:      %{name}-doc < 0.22-1
 
@@ -111,7 +110,7 @@ modifying the core system.
 %package data
 Summary:        Data files for FreeCAD
 BuildArch:      noarch
-Requires:       %{name} = %{epoch}:%{version}-%{release}
+Requires:       %{name} = %{?epoch:%{epoch}:}%{version}-%{release}
 
 %description data
 Data files for FreeCAD
@@ -119,7 +118,7 @@ Data files for FreeCAD
 %package libondselsolver-devel
 Summary:        Development file for OndselSolver
 BuildArch:      noarch
-Requires:       %{name} = %{epoch}:%{version}-%{release}
+Requires:       %{name} = %{?epoch:%{epoch}:}%{version}-%{release}
 
 %description libondselsolver-devel
 Development file for OndselSolver
@@ -136,13 +135,7 @@ Development file for OndselSolver
 %prep
     %setup -T -a 0 -q -c -n FreeCAD-1.0.2
 
-%build
-     # Deal with cmake projects that tend to link excessively.
-    LDFLAGS='-Wl,--as-needed -Wl,--no-undefined'; export LDFLAGS
-
-#         -DCMAKE_INSTALL_DATADIR=%{_datadir}/%{name} \
-#         -DCMAKE_INSTALL_DATAROOTDIR=%{_datadir} \
-
+%conf
     %cmake \
         -DCMAKE_INSTALL_PREFIX=%{_libdir}/%{name} \
         -DCMAKE_INSTALL_DOCDIR=%{_docdir}/%{name} \
@@ -170,6 +163,8 @@ Development file for OndselSolver
         -DBUILD_GUI=TRUE \
         -G Ninja
 
+
+%build
     %cmake_build
 
 
@@ -202,8 +197,6 @@ Development file for OndselSolver
     mv %{buildroot}%{_libdir}/freecad/share/pkgconfig %{buildroot}%{_datadir}/
 
 %check
-
-
 %if %{with tests}
     mkdir -p %{buildroot}%tests_resultdir
     if wlheadless-run -- \%ctest &> %{buildroot}%tests_resultdir/ctest.result ; then
